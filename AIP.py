@@ -3,13 +3,13 @@
 # @Email:  hanzhiyun1995@foxmail.com
 # @Date:   2020-08-15 21:02:44
 # @Last Modified by:   hanzhiyun
-# @Last Modified time: 2020-08-17 15:37:07
+# @Last Modified time: 2020-08-17 16:05:08
 
 # automatic investment plan
 
 import requests
 import time
-import execjs, json
+import json, js2py
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -43,14 +43,19 @@ def getDate(timeStamp):
 def getWorth(fscode):
 	#用requests获取到对应的文件
 	content = requests.get(getUrl(fscode))
-   #使用execjs获取到相应的数据
-	jsContent = execjs.compile(content.text)
-	name = jsContent.eval('fS_name')
-	code = jsContent.eval('fS_code')
+	# jsContent2 = js2py.EvalJs()
+	# jsContent2.execute(content.text)
+	# name2 = jsContent2.fS_name
+	# print(name2)
+   #使用js2py获取到相应的数据
+	jsContent = js2py.EvalJs()
+	jsContent.execute(content.text)
+	name = jsContent.fS_name
+	code = jsContent.fS_code
 	#单位净值走势,时间正方向
-	netWorthTrend = jsContent.eval('Data_netWorthTrend')
+	netWorthTrend = jsContent.Data_netWorthTrend
 	#累计净值走势
-	ACWorthTrend = jsContent.eval('Data_ACWorthTrend')
+	ACWorthTrend = jsContent.Data_ACWorthTrend
 	# print(netWorthTrend)
 	netWorth = []
 	ACWorth = []
@@ -98,10 +103,10 @@ def aveStrategy(data):
 	netWorth_T = float(data.iloc[-1,1])
 	MA_T = float(data.iloc[-1,2])
 	ten_AM = float(data.iloc[-10:,1].max())/float(data.iloc[-10:,1].min()) - 1
-	ten_AM = int(ten_AM * 100)
-	ref_T = int((netWorth_T - MA_T) / MA_T * 100)
-	print(netWorth_T, MA_T)
-	print('T-1日净值比均线高 %d%%, 十日振幅为 %d%%' %(ref_T,ten_AM))
+	ten_AM = ten_AM * 100
+	ref_T = (netWorth_T - MA_T) / MA_T * 100
+	print('T-1日净值: %.3f\n均线值： %.3f' %(netWorth_T, MA_T))
+	print('T-1日净值比均线高 %.2f%%, 十日振幅为 %.2f%%' %(ref_T,ten_AM))
 	if ref_T >= 0 and ref_T < 15:
 		return 0.9
 	elif ref_T >= 15 and ref_T <50:
@@ -143,14 +148,6 @@ def aveStrategy(data):
 	else:
 		return 0
 
-
-# netWorth, ACWorth = getWorth('001594')
-# df = pd.DataFrame(netWorth)
-# getMA(df, 250)
-# print(df)
-
-# # print(netWorth[-30:, 1])
-# # print(netWorth)
 
 # # 画趋势图
 # plt.figure(figsize=(10,5))
